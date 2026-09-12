@@ -53,7 +53,10 @@ $logdir = Join-Path $artifactsdir "log"
 $logdir = Join-Path $logdir Windows_NT.$architecture.$configuration
 
 $bl = if ($binaryLog) { '-binaryLog' } else { '' }
-$unprocessedBuildArgs = @($remainingargs)
+# Build actions belong to the managed build, not the separate test invocation. Array splatting
+# would pass them as positional MSBuild arguments instead of binding Arcade's switches.
+$buildActions = 'restore|r|build|b|rebuild|clean|deployDeps|deploy|integrationTest|performanceTest|sign|pack|publish|productBuild|pb'
+$unprocessedBuildArgs = @($remainingargs | Where-Object { $_ -notmatch "^-(?:$buildActions)(?::.*)?$" })
 
 if ($ci) {
     $remainingargs = "-ci " + $remainingargs
